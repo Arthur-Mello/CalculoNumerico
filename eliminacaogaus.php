@@ -4,12 +4,8 @@ function is_near_zero($v, $eps = 1e-10) { return abs($v) < $eps; }
 
 function gauss_elimination(array $A, array $b, &$steps = []) {
     $n = count($A);
-    // Copiamos para não alterar os originais nas anotações
     for ($i = 0; $i < $n; $i++) { $A[$i] = array_map('floatval', $A[$i]); $b[$i] = floatval($b[$i]); }
-
-    // Eliminação direta com pivotamento parcial
     for ($k = 0; $k < $n; $k++) {
-        // Escolher pivô (linha com maior |A[i][k]| a partir de k)
         $p = $k; $maxVal = abs($A[$k][$k]);
         for ($i = $k + 1; $i < $n; $i++) {
             if (abs($A[$i][$k]) > $maxVal) { $maxVal = abs($A[$i][$k]); $p = $i; }
@@ -20,14 +16,13 @@ function gauss_elimination(array $A, array $b, &$steps = []) {
             return [null, $A, $b];
         }
 
-        // Trocar linhas k e p se necessário
         if ($p !== $k) {
             [$A[$k], $A[$p]] = [$A[$p], $A[$k]];
             [$b[$k], $b[$p]] = [$b[$p], $b[$k]];
             $steps[] = sprintf("Troca L%d ⇄ L%d (pivotamento parcial)", $k+1, $p+1);
         }
 
-        // Eliminar abaixo do pivô
+
         for ($i = $k + 1; $i < $n; $i++) {
             if (is_near_zero($A[$i][$k])) continue;
             $m = $A[$i][$k] / $A[$k][$k];
@@ -39,7 +34,6 @@ function gauss_elimination(array $A, array $b, &$steps = []) {
         }
     }
 
-    // Retrossubstituição
     $x = array_fill(0, $n, 0.0);
     for ($i = $n - 1; $i >= 0; $i--) {
         $sum = 0.0;
@@ -54,13 +48,12 @@ function gauss_elimination(array $A, array $b, &$steps = []) {
     return [$x, $A, $b];
 }
 
-// Helpers de UI
 function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 function get_post($key, $default = null) { return $_POST[$key] ?? $default; }
 
 $stage = get_post('stage', 'choose_n');
 $n = intval(get_post('n', 3));
-if ($n < 2) $n = 2; if ($n > 8) $n = 8; // limites razoáveis
+if ($n < 2) $n = 2; if ($n > 8) $n = 8;
 
 ?>
 <!doctype html>
