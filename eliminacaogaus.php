@@ -2,9 +2,40 @@
 
 function is_near_zero($v, $eps = 1e-10) { return abs($v) < $eps; }
 
+function render_matrix_state($A, $b) {
+    $n = count($A);
+    $html = '<p class="text-white"><strong>Estado Atual da Matriz</strong></p>';
+    $html .= '<table class="table table-dark table-sm align-middle mt-2 mb-3"><thead><tr>';
+    for ($j = 0; $j < $n; $j++) {
+        $html .= "<th class=\"text-white\">U[·," . ($j + 1) . "]</th>";
+    }
+    $html .= "<th class=\"text-white\">= c</th></tr></thead><tbody>";
+    for ($i = 0; $i < $n; $i++) {
+        $html .= "<tr>";
+        for ($j = 0; $j < $n; $j++) {
+            $html .= "<td class=\"text-white\">" . number_format($A[$i][$j], 6, '.', '') . "</td>";
+        }
+        $html .= "<td class=\"text-white\">" . number_format($b[$i], 6, '.', '') . "</td>";
+        $html .= "</tr>";
+    }
+    $html .= "</tbody></table>";
+    return $html;
+}
+
 function gauss_elimination(array $A, array $b, &$steps = []) {
     $n = count($A);
     for ($i = 0; $i < $n; $i++) { $A[$i] = array_map('floatval', $A[$i]); $b[$i] = floatval($b[$i]); }
+    // Initialize L as identity matrix
+    $L = array_fill(0, $n, array_fill(0, $n, 0.0));
+    for ($i = 0; $i < $n; $i++) {
+        $L[$i][$i] = 1.0;
+    }
+    // Initialize P as identity matrix
+    $P = array_fill(0, $n, array_fill(0, $n, 0.0));
+    for ($i = 0; $i < $n; $i++) {
+        $P[$i][$i] = 1.0;
+    }
+
     for ($k = 0; $k < $n; $k++) {
         $p = $k; $maxVal = abs($A[$k][$k]);
         for ($i = $k + 1; $i < $n; $i++) {
@@ -12,25 +43,33 @@ function gauss_elimination(array $A, array $b, &$steps = []) {
         }
 
         if (is_near_zero($maxVal)) {
-            $steps[] = "Coluna $k: pivô ~ 0 ⇒ sistema singular/indeterminado.";
-            return [null, $A, $b];
+            $steps[] = ['type'=>'text', 'content'=>"Coluna $k: pivô ~ 0 ⇒ sistema singular/indeterminado."];
+            return [null, $L, $A, $P, $b];
         }
 
         if ($p !== $k) {
             [$A[$k], $A[$p]] = [$A[$p], $A[$k]];
             [$b[$k], $b[$p]] = [$b[$p], $b[$k]];
-            $steps[] = sprintf("Troca L%d ⇄ L%d (pivotamento parcial)", $k+1, $p+1);
+            // Swap rows p and k in P
+            [$P[$k], $P[$p]] = [$P[$p], $P[$k]];
+            // Swap rows p and k in L for columns 0 to k-1
+            for ($col = 0; $col < $k; $col++) {
+                [$L[$k][$col], $L[$p][$col]] = [$L[$p][$col], $L[$k][$col]];
+            }
+            $steps[] = ['type'=>'text', 'content'=>sprintf("Troca L%d ⇄ L%d (pivotamento parcial)", $k+1, $p+1)];
         }
 
 
         for ($i = $k + 1; $i < $n; $i++) {
             if (is_near_zero($A[$i][$k])) continue;
             $m = $A[$i][$k] / $A[$k][$k];
+            $L[$i][$k] = $m;
             for ($j = $k; $j < $n; $j++) {
                 $A[$i][$j] -= $m * $A[$k][$j];
             }
             $b[$i] -= $m * $b[$k];
-            $steps[] = sprintf("L%d ← L%d − (%.6g)·L%d", $i+1, $i+1, $m, $k+1);
+            $steps[] = ['type'=>'text', 'content'=>sprintf("L%d ← L%d − (%.6g)·L%d", $i+1, $i+1, $m, $k+1)];
+            $steps[] = ['type'=>'matrix', 'content'=>render_matrix_state($A, $b)];
         }
     }
 
@@ -39,13 +78,13 @@ function gauss_elimination(array $A, array $b, &$steps = []) {
         $sum = 0.0;
         for ($j = $i + 1; $j < $n; $j++) { $sum += $A[$i][$j] * $x[$j]; }
         if (is_near_zero($A[$i][$i])) {
-            $steps[] = "Encontrado pivô zero na retrossubstituição ⇒ sistema singular.";
-            return [null, $A, $b];
+            $steps[] = ['type'=>'text', 'content'=>"Encontrado pivô zero na retrossubstituição ⇒ sistema singular."];
+            return [null, $L, $A, $P, $b];
         }
         $x[$i] = ($b[$i] - $sum) / $A[$i][$i];
     }
 
-    return [$x, $A, $b];
+    return [$x, $L, $A, $P, $b];
 }
 
 function h($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
@@ -72,6 +111,8 @@ if ($n < 2) $n = 2; if ($n > 8) $n = 8;
     .matrix-cell { width: 7rem; }
     .hint { color:#93c5fd; }
     a, .btn-link { color:#93c5fd; }
+    th, td { color: #ffffff !important; }
+    h2, h3, p { color: #ffffff !important; }
   </style>
 </head>
 <body>
@@ -112,20 +153,20 @@ if ($n < 2) $n = 2; if ($n > 8) $n = 8;
                 <thead>
                   <tr>
                     <?php for ($j=0; $j<$n; $j++): ?>
-                      <th>A[·,<?= $j+1 ?>]</th>
+                      <th class="text-white">A[·,<?= $j+1 ?>]</th>
                     <?php endfor; ?>
-                    <th>= b</th>
+                    <th class="text-white">= b</th>
                   </tr>
                 </thead>
                 <tbody>
                   <?php for ($i=0; $i<$n; $i++): ?>
                     <tr>
                       <?php for ($j=0; $j<$n; $j++): ?>
-                        <td>
+                        <td class="text-white">
                           <input required type="text" class="form-control form-control-sm matrix-cell" name="a_<?= $i ?>_<?= $j ?>" value="<?= $i===$j? '1': '0' ?>">
                         </td>
                       <?php endfor; ?>
-                      <td>
+                      <td class="text-white">
                         <input required type="text" class="form-control form-control-sm matrix-cell" name="b_<?= $i ?>" value="0">
                       </td>
                     </tr>
@@ -152,17 +193,21 @@ if ($n < 2) $n = 2; if ($n > 8) $n = 8;
             $bvec[] = floatval(get_post("b_{$i}", 0));
           }
           $steps = [];
-          [$x, $U, $c] = gauss_elimination($A, $bvec, $steps);
+          [$x, $L, $U, $P, $c] = gauss_elimination($A, $bvec, $steps);
         ?>
         <div class="row g-3">
           <div class="col-12 col-lg-6">
             <div class="card rounded-2xl mb-3">
               <div class="card-body">
-                <h2 class="h5 mb-3"><i class="bi bi-list-check me-2"></i>Passos da eliminação</h2>
+                <h2 class="h5 mb-3 text-white"><i class="bi bi-list-check me-2"></i>Passos da eliminação</h2>
                 <?php if (!empty($steps)): ?>
                   <ol class="mb-0">
                     <?php foreach ($steps as $s): ?>
-                      <li><?= h($s) ?></li>
+                      <?php if ($s['type'] === 'matrix'): ?>
+                        <div><?= $s['content'] ?></div>
+                      <?php else: ?>
+                        <li><?= h($s['content']) ?></li>
+                      <?php endif; ?>
                     <?php endforeach; ?>
                   </ol>
                 <?php else: ?>
@@ -171,23 +216,71 @@ if ($n < 2) $n = 2; if ($n > 8) $n = 8;
               </div>
             </div>
 
-            <div class="card rounded-2xl">
+            <div class="card rounded-2xl mb-3">
               <div class="card-body">
-                <h2 class="h5 mb-3"><i class="bi bi-clipboard-data me-2"></i>Matriz triangular superior U e vetor c</h2>
+                <h2 class="h5 mb-3 text-white"><i class="bi bi-clipboard-data me-2"></i>Matriz de Permutação P</h2>
                 <div class="table-responsive">
                   <table class="table table-dark table-sm align-middle">
                     <thead>
                       <tr>
-                        <?php for ($j=0; $j<$n; $j++): ?><th>U[·,<?= $j+1 ?>]</th><?php endfor; ?><th>= c</th>
+                        <?php for ($j=0; $j<$n; $j++): ?><th class="text-white">P[·,<?= $j+1 ?>]</th><?php endfor; ?>
                       </tr>
                     </thead>
                     <tbody>
                       <?php for ($i=0; $i<$n; $i++): ?>
                         <tr>
                           <?php for ($j=0; $j<$n; $j++): ?>
-                            <td><?= h(number_format($U[$i][$j], 6, '.', '')) ?></td>
+                            <td class="text-white"><?= h(number_format($P[$i][$j], 6, '.', '')) ?></td>
                           <?php endfor; ?>
-                          <td><?= h(number_format($c[$i], 6, '.', '')) ?></td>
+                        </tr>
+                      <?php endfor; ?>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="card rounded-2xl mb-3">
+              <div class="card-body">
+                <h2 class="h5 mb-3 text-white"><i class="bi bi-clipboard-data me-2"></i>Matriz triangular inferior L</h2>
+                <div class="table-responsive">
+                  <table class="table table-dark table-sm align-middle">
+                    <thead>
+                      <tr>
+                        <?php for ($j=0; $j<$n; $j++): ?><th class="text-white">L[·,<?= $j+1 ?>]</th><?php endfor; ?>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php for ($i=0; $i<$n; $i++): ?>
+                        <tr>
+                          <?php for ($j=0; $j<$n; $j++): ?>
+                            <td class="text-white"><?= h(number_format($L[$i][$j], 6, '.', '')) ?></td>
+                          <?php endfor; ?>
+                        </tr>
+                      <?php endfor; ?>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="card rounded-2xl">
+              <div class="card-body">
+                <h2 class="h5 mb-3 text-white"><i class="bi bi-clipboard-data me-2"></i>Matriz triangular superior U e vetor c</h2>
+                <div class="table-responsive">
+                  <table class="table table-dark table-sm align-middle">
+                    <thead>
+                      <tr>
+                        <?php for ($j=0; $j<$n; $j++): ?><th class="text-white">U[·,<?= $j+1 ?>]</th><?php endfor; ?><th class="text-white">= c</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php for ($i=0; $i<$n; $i++): ?>
+                        <tr>
+                          <?php for ($j=0; $j<$n; $j++): ?>
+                            <td class="text-white"><?= h(number_format($U[$i][$j], 6, '.', '')) ?></td>
+                          <?php endfor; ?>
+                          <td class="text-white"><?= h(number_format($c[$i], 6, '.', '')) ?></td>
                         </tr>
                       <?php endfor; ?>
                     </tbody>
@@ -200,13 +293,13 @@ if ($n < 2) $n = 2; if ($n > 8) $n = 8;
           <div class="col-12 col-lg-6">
             <div class="card rounded-2xl h-100">
               <div class="card-body d-flex flex-column">
-                <h2 class="h5 mb-3"><i class="bi bi-check2-circle me-2"></i>Resultado</h2>
+                <h2 class="h5 mb-3 text-white"><i class="bi bi-check2-circle me-2"></i>Resultado</h2>
                 <?php if ($x === null): ?>
                   <div class="alert alert-warning rounded-3" role="alert">
                     O sistema parece singular ou indeterminado. Verifique os coeficientes.
                   </div>
                 <?php else: ?>
-                  <p class="mb-2">Solução aproximada (precisão 6 casas decimais):</p>
+                  <p class="mb-2 text-white">Solução aproximada (precisão 6 casas decimais):</p>
                   <ul class="list-group mb-3">
                     <?php for ($i=0; $i<$n; $i++): ?>
                       <li class="list-group-item d-flex justify-content-between align-items-center">
