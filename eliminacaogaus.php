@@ -22,66 +22,63 @@ function render_matrix_state($A, $b) {
     return $html;
 }
 
-function gauss_elimination(array $A, array $b, &$steps = []) {
+function gauss_elimination(array $A, array $b, &$steps = [], $use_P = true) {
     $n = count($A);
     for ($i = 0; $i < $n; $i++) { $A[$i] = array_map('floatval', $A[$i]); $b[$i] = floatval($b[$i]); }
-    // Initialize L as identity matrix
+
+    // Inicializa L como identidade
     $L = array_fill(0, $n, array_fill(0, $n, 0.0));
-    for ($i = 0; $i < $n; $i++) {
-        $L[$i][$i] = 1.0;
-    }
-    // Initialize P as identity matrix
+    for ($i = 0; $i < $n; $i++) $L[$i][$i] = 1.0;
+
+    // Inicializa P como identidade se pivotamento for usado
     $P = array_fill(0, $n, array_fill(0, $n, 0.0));
-    for ($i = 0; $i < $n; $i++) {
-        $P[$i][$i] = 1.0;
-    }
+    if ($use_P) for ($i = 0; $i < $n; $i++) $P[$i][$i] = 1.0;
 
     for ($k = 0; $k < $n; $k++) {
         $p = $k; $maxVal = abs($A[$k][$k]);
-        for ($i = $k + 1; $i < $n; $i++) {
-            if (abs($A[$i][$k]) > $maxVal) { $maxVal = abs($A[$i][$k]); $p = $i; }
+
+        if ($use_P) { // Pivotamento parcial
+            for ($i = $k + 1; $i < $n; $i++) {
+                if (abs($A[$i][$k]) > $maxVal) { $maxVal = abs($A[$i][$k]); $p = $i; }
+            }
+            if ($p !== $k) {
+                [$A[$k], $A[$p]] = [$A[$p], $A[$k]];
+                [$b[$k], $b[$p]] = [$b[$p], $b[$k]];
+                [$P[$k], $P[$p]] = [$P[$p], $P[$k]];
+                for ($col = 0; $col < $k; $col++) {
+                    [$L[$k][$col], $L[$p][$col]] = [$L[$p][$col], $L[$k][$col]];
+                }
+                $steps[] = ['type'=>'text', 'content'=>sprintf("Troca L%d ⇄ L%d (pivotamento parcial)", $k+1, $p+1)];
+            }
         }
 
-        if (is_near_zero($maxVal)) {
+        if (is_near_zero($A[$k][$k])) {
             $steps[] = ['type'=>'text', 'content'=>"Coluna $k: pivô ~ 0 ⇒ sistema singular/indeterminado."];
             return [null, $L, $A, $P, $b];
         }
 
-        if ($p !== $k) {
-            [$A[$k], $A[$p]] = [$A[$p], $A[$k]];
-            [$b[$k], $b[$p]] = [$b[$p], $b[$k]];
-            // Swap rows p and k in P
-            [$P[$k], $P[$p]] = [$P[$p], $P[$k]];
-            // Swap rows p and k in L for columns 0 to k-1
-            for ($col = 0; $col < $k; $col++) {
-                [$L[$k][$col], $L[$p][$col]] = [$L[$p][$col], $L[$k][$col]];
-            }
-            $steps[] = ['type'=>'text', 'content'=>sprintf("Troca L%d ⇄ L%d (pivotamento parcial)", $k+1, $p+1)];
-        }
-
-
+        // Eliminação
         for ($i = $k + 1; $i < $n; $i++) {
             if (is_near_zero($A[$i][$k])) continue;
             $m = $A[$i][$k] / $A[$k][$k];
             $L[$i][$k] = $m;
-            for ($j = $k; $j < $n; $j++) {
-                $A[$i][$j] -= $m * $A[$k][$j];
-            }
+            for ($j = $k; $j < $n; $j++) $A[$i][$j] -= $m * $A[$k][$j];
             $b[$i] -= $m * $b[$k];
             $steps[] = ['type'=>'text', 'content'=>sprintf("L%d ← L%d − (%.6g)·L%d", $i+1, $i+1, $m, $k+1)];
             $steps[] = ['type'=>'matrix', 'content'=>render_matrix_state($A, $b)];
         }
     }
 
+    // Retrossubstituição
     $x = array_fill(0, $n, 0.0);
-    for ($i = $n - 1; $i >= 0; $i--) {
+    for ($i = $n-1; $i >=0; $i--) {
         $sum = 0.0;
-        for ($j = $i + 1; $j < $n; $j++) { $sum += $A[$i][$j] * $x[$j]; }
+        for ($j = $i+1; $j<$n; $j++) $sum += $A[$i][$j]*$x[$j];
         if (is_near_zero($A[$i][$i])) {
-            $steps[] = ['type'=>'text', 'content'=>"Encontrado pivô zero na retrossubstituição ⇒ sistema singular."];
+            $steps[] = ['type'=>'text','content'=>"Pivô zero na retrossubstituição ⇒ sistema singular."];
             return [null, $L, $A, $P, $b];
         }
-        $x[$i] = ($b[$i] - $sum) / $A[$i][$i];
+        $x[$i] = ($b[$i]-$sum)/$A[$i][$i];
     }
 
     return [$x, $L, $A, $P, $b];
@@ -93,6 +90,7 @@ function get_post($key, $default = null) { return $_POST[$key] ?? $default; }
 $stage = get_post('stage', 'choose_n');
 $n = intval(get_post('n', 3));
 if ($n < 2) $n = 2; if ($n > 8) $n = 8;
+$use_P = get_post('use_P', 0) == 1;
 
 ?>
 <!doctype html>
@@ -104,22 +102,22 @@ if ($n < 2) $n = 2; if ($n > 8) $n = 8;
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    body { background: #0f172a; color: #e2e8f0; }
-    .card { background: #111827; border: 1px solid #1f2937; }
+    body { background: #d9d9d9ff; color: #e2e8f0; }
+    .card { background: #ffffffff; border: 1px solid #1f2937; }
     .form-control, .form-select { background: #0b1220; color: #e5e7eb; border-color: #1f2937; }
     .rounded-2xl { border-radius: 1rem; }
     .matrix-cell { width: 7rem; }
     .hint { color:#93c5fd; }
     a, .btn-link { color:#93c5fd; }
-    th, td { color: #ffffff !important; }
-    h2, h3, p { color: #ffffff !important; }
+    th, td { color: #101010ff !important; }
+    h2, h3, p { color: #090909ff !important; }
   </style>
 </head>
 <body>
 <div class="container py-4">
   <div class="d-flex align-items-center mb-4">
     <i class="bi bi-calculator-fill fs-2 me-2 text-info"></i>
-    <h1 class="h3 m-0">Eliminação de Gauss <small class="text-secondary">(pivotamento parcial)</small></h1>
+    <h1 class="h3 m-0">Eliminação de Gauss <small class="text-secondary">(<?= $use_P?'pivotamento parcial':'simples' ?>)</small></h1>
   </div>
 
   <div class="card rounded-2xl shadow p-3 mb-4">
@@ -136,6 +134,14 @@ if ($n < 2) $n = 2; if ($n > 8) $n = 8;
             </select>
           </div>
           <div class="col-auto align-self-end">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="1" id="use_P" name="use_P" <?= $use_P?'checked':'' ?>>
+              <label class="form-check-label" for="use_P">
+                Usar matriz de permutação (pivotamento parcial)
+              </label>
+            </div>
+          </div>
+          <div class="col-auto align-self-end">
             <button class="btn btn-info rounded-pill"><i class="bi bi-grid-3x3-gap me-1"></i>Criar matriz</button>
           </div>
         </form>
@@ -143,6 +149,7 @@ if ($n < 2) $n = 2; if ($n > 8) $n = 8;
         <form method="post">
           <input type="hidden" name="stage" value="solve">
           <input type="hidden" name="n" value="<?= $n ?>">
+          <input type="hidden" name="use_P" value="<?= $use_P?1:0 ?>">
           <div class="mb-3">
             <div class="d-flex align-items-center mb-2">
               <span class="me-2">Informe a matriz <strong>A</strong> e o vetor <strong>b</strong> (sistema A·x = b):</span>
@@ -193,7 +200,7 @@ if ($n < 2) $n = 2; if ($n > 8) $n = 8;
             $bvec[] = floatval(get_post("b_{$i}", 0));
           }
           $steps = [];
-          [$x, $L, $U, $P, $c] = gauss_elimination($A, $bvec, $steps);
+          [$x, $L, $U, $P, $c] = gauss_elimination($A, $bvec, $steps, $use_P);
         ?>
         <div class="row g-3">
           <div class="col-12 col-lg-6">
@@ -216,6 +223,7 @@ if ($n < 2) $n = 2; if ($n > 8) $n = 8;
               </div>
             </div>
 
+            <?php if($use_P): ?>
             <div class="card rounded-2xl mb-3">
               <div class="card-body">
                 <h2 class="h5 mb-3 text-white"><i class="bi bi-clipboard-data me-2"></i>Matriz de Permutação P</h2>
@@ -239,6 +247,7 @@ if ($n < 2) $n = 2; if ($n > 8) $n = 8;
                 </div>
               </div>
             </div>
+            <?php endif; ?>
 
             <div class="card rounded-2xl mb-3">
               <div class="card-body">
@@ -312,14 +321,10 @@ if ($n < 2) $n = 2; if ($n > 8) $n = 8;
                     <form method="post">
                       <input type="hidden" name="stage" value="enter_matrix">
                       <input type="hidden" name="n" value="<?= $n ?>">
-                      <?php for ($i=0; $i<$n; $i++): for ($j=0; $j<$n; $j++): ?>
-                        <input type="hidden" name="a_<?= $i ?>_<?= $j ?>" value="<?= h($A[$i][$j]) ?>">
-                      <?php endfor; endfor; for ($i=0; $i<$n; $i++): ?>
-                        <input type="hidden" name="b_<?= $i ?>" value="<?= h($bvec[$i]) ?>">
-                      <?php endfor; ?>
-                      <button class="btn btn-outline-info rounded-pill" title="Editar valores"><i class="bi bi-pencil-square me-1"></i>Editar</button>
+                      <input type="hidden" name="use_P" value="<?= $use_P?1:0 ?>">
+                      <button class="btn btn-secondary rounded-pill"><i class="bi bi-arrow-counterclockwise me-1"></i>Voltar</button>
                     </form>
-                    <a class="btn btn-secondary rounded-pill" href="?"><i class="bi bi-arrow-counterclockwise me-1"></i>Novo cálculo</a>
+                    <a href="?" class="btn btn-outline-light rounded-pill"><i class="bi bi-x-circle me-1"></i>Reiniciar</a>
                   </div>
                 <?php endif; ?>
               </div>
@@ -330,7 +335,6 @@ if ($n < 2) $n = 2; if ($n > 8) $n = 8;
     </div>
   </div>
 </div>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
