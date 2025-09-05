@@ -81,7 +81,7 @@ function get_post($key, $default = null) { return $_POST[$key] ?? $default; }
 
 $stage = get_post('stage', 'choose_n');
 $n = intval(get_post('n', 3));
-if ($n < 2) $n = 2; if ($n > 8) $n = 8;
+if ($n < 2) $n = 2; if ($n > 10) $n = 10;
 $use_P = get_post('use_P', 0) == 1;
 
 ?>
@@ -114,7 +114,7 @@ $use_P = get_post('use_P', 0) == 1;
           <div class="col-auto">
             <label class="form-label" for="n">Tamanho do sistema (n × n):</label>
             <select name="n" id="n" class="form-select rounded-pill">
-              <?php for ($i=2; $i<=8; $i++): ?>
+              <?php for ($i=2; $i<=10; $i++): ?>
                 <option value="<?= $i ?>" <?= $i===$n? 'selected':'' ?>><?= $i ?></option>
               <?php endfor; ?>
             </select>
