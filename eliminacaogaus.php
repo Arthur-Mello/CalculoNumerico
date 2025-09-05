@@ -4,7 +4,7 @@ function is_near_zero($v, $eps = 1e-10) { return abs($v) < $eps; }
 
 function render_matrix_state($A, $b) {
     $n = count($A);
-    $html = '<p class="text-white"><strong>Estado Atual da Matriz</strong></p>';
+    $html = '<p class="text-black"><strong>Estado Atual da Matriz</strong></p>';
     $html .= '<table class="table table-dark table-sm align-middle mt-2 mb-3"><thead><tr>';
     for ($j = 0; $j < $n; $j++) {
         $html .= "<th class=\"text-white\">U[·," . ($j + 1) . "]</th>";
@@ -25,19 +25,15 @@ function render_matrix_state($A, $b) {
 function gauss_elimination(array $A, array $b, &$steps = [], $use_P = true) {
     $n = count($A);
     for ($i = 0; $i < $n; $i++) { $A[$i] = array_map('floatval', $A[$i]); $b[$i] = floatval($b[$i]); }
-
-    // Inicializa L como identidade
     $L = array_fill(0, $n, array_fill(0, $n, 0.0));
     for ($i = 0; $i < $n; $i++) $L[$i][$i] = 1.0;
-
-    // Inicializa P como identidade se pivotamento for usado
     $P = array_fill(0, $n, array_fill(0, $n, 0.0));
     if ($use_P) for ($i = 0; $i < $n; $i++) $P[$i][$i] = 1.0;
 
     for ($k = 0; $k < $n; $k++) {
         $p = $k; $maxVal = abs($A[$k][$k]);
 
-        if ($use_P) { // Pivotamento parcial
+        if ($use_P) { 
             for ($i = $k + 1; $i < $n; $i++) {
                 if (abs($A[$i][$k]) > $maxVal) { $maxVal = abs($A[$i][$k]); $p = $i; }
             }
@@ -56,8 +52,6 @@ function gauss_elimination(array $A, array $b, &$steps = [], $use_P = true) {
             $steps[] = ['type'=>'text', 'content'=>"Coluna $k: pivô ~ 0 ⇒ sistema singular/indeterminado."];
             return [null, $L, $A, $P, $b];
         }
-
-        // Eliminação
         for ($i = $k + 1; $i < $n; $i++) {
             if (is_near_zero($A[$i][$k])) continue;
             $m = $A[$i][$k] / $A[$k][$k];
@@ -68,8 +62,6 @@ function gauss_elimination(array $A, array $b, &$steps = [], $use_P = true) {
             $steps[] = ['type'=>'matrix', 'content'=>render_matrix_state($A, $b)];
         }
     }
-
-    // Retrossubstituição
     $x = array_fill(0, $n, 0.0);
     for ($i = $n-1; $i >=0; $i--) {
         $sum = 0.0;
@@ -98,19 +90,13 @@ $use_P = get_post('use_P', 0) == 1;
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Eliminação de Gauss em PHP</title>
+  <title>Eliminação de Gauss</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    body { background: #d9d9d9ff; color: #e2e8f0; }
-    .card { background: #ffffffff; border: 1px solid #1f2937; }
-    .form-control, .form-select { background: #0b1220; color: #e5e7eb; border-color: #1f2937; }
-    .rounded-2xl { border-radius: 1rem; }
-    .matrix-cell { width: 7rem; }
-    .hint { color:#93c5fd; }
-    a, .btn-link { color:#93c5fd; }
-    th, td { color: #101010ff !important; }
-    h2, h3, p { color: #090909ff !important; }
+    h1, h2, h3, h4, h5, h6 {
+        color: #000 !important;
+    }
   </style>
 </head>
 <body>
@@ -189,7 +175,6 @@ $use_P = get_post('use_P', 0) == 1;
         </form>
       <?php elseif ($stage === 'solve'): ?>
         <?php
-          // Coletar A e b do POST
           $A = []; $bvec = [];
           for ($i=0; $i<$n; $i++) {
             $row = [];
@@ -206,7 +191,7 @@ $use_P = get_post('use_P', 0) == 1;
           <div class="col-12 col-lg-6">
             <div class="card rounded-2xl mb-3">
               <div class="card-body">
-                <h2 class="h5 mb-3 text-white"><i class="bi bi-list-check me-2"></i>Passos da eliminação</h2>
+                <h2 class="h5 mb-3 text-black"><i class="bi bi-list-check me-2"></i>Passos da eliminação</h2>
                 <?php if (!empty($steps)): ?>
                   <ol class="mb-0">
                     <?php foreach ($steps as $s): ?>
@@ -226,7 +211,7 @@ $use_P = get_post('use_P', 0) == 1;
             <?php if($use_P): ?>
             <div class="card rounded-2xl mb-3">
               <div class="card-body">
-                <h2 class="h5 mb-3 text-white"><i class="bi bi-clipboard-data me-2"></i>Matriz de Permutação P</h2>
+                <h2 class="h5 mb-3 text-black"><i class="bi bi-clipboard-data me-2"></i>Matriz de Permutação P</h2>
                 <div class="table-responsive">
                   <table class="table table-dark table-sm align-middle">
                     <thead>
@@ -251,7 +236,7 @@ $use_P = get_post('use_P', 0) == 1;
 
             <div class="card rounded-2xl mb-3">
               <div class="card-body">
-                <h2 class="h5 mb-3 text-white"><i class="bi bi-clipboard-data me-2"></i>Matriz triangular inferior L</h2>
+                <h2 class="h5 mb-3 text-black"><i class="bi bi-clipboard-data me-2"></i>Matriz triangular inferior L</h2>
                 <div class="table-responsive">
                   <table class="table table-dark table-sm align-middle">
                     <thead>
@@ -275,7 +260,7 @@ $use_P = get_post('use_P', 0) == 1;
 
             <div class="card rounded-2xl">
               <div class="card-body">
-                <h2 class="h5 mb-3 text-white"><i class="bi bi-clipboard-data me-2"></i>Matriz triangular superior U e vetor c</h2>
+                <h2 class="h5 mb-3 text-black"><i class="bi bi-clipboard-data me-2"></i>Matriz triangular superior U e vetor c</h2>
                 <div class="table-responsive">
                   <table class="table table-dark table-sm align-middle">
                     <thead>
@@ -302,13 +287,13 @@ $use_P = get_post('use_P', 0) == 1;
           <div class="col-12 col-lg-6">
             <div class="card rounded-2xl h-100">
               <div class="card-body d-flex flex-column">
-                <h2 class="h5 mb-3 text-white"><i class="bi bi-check2-circle me-2"></i>Resultado</h2>
+                <h2 class="h5 mb-3 text-black"><i class="bi bi-check2-circle me-2"></i>Resultado</h2>
                 <?php if ($x === null): ?>
                   <div class="alert alert-warning rounded-3" role="alert">
                     O sistema parece singular ou indeterminado. Verifique os coeficientes.
                   </div>
                 <?php else: ?>
-                  <p class="mb-2 text-white">Solução aproximada (precisão 6 casas decimais):</p>
+                  <p class="mb-2 text-black">Solução aproximada (precisão 6 casas decimais):</p>
                   <ul class="list-group mb-3">
                     <?php for ($i=0; $i<$n; $i++): ?>
                       <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -333,6 +318,11 @@ $use_P = get_post('use_P', 0) == 1;
         </div>
       <?php endif; ?>
     </div>
+  </div>
+  <div class="mt-3">
+    <a href="index.php" class="btn btn-primary rounded-pill">
+      <i class="bi bi-arrow-left me-1"></i> Voltar ao Menu
+    </a>
   </div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
