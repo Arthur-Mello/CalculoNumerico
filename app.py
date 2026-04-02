@@ -242,16 +242,8 @@ BASE_HEAD = """
     .badge-conv { font-size: .85rem; }
   </style>
 </head>
-<body>
-<nav class="navbar navbar-dark bg-dark mb-4">
-  <div class="container">
-    <span class="navbar-brand"><i class="bi bi-calculator-fill me-2"></i>Cálculo Numérico</span>
-    <a href="/" class="btn btn-outline-light btn-sm rounded-pill">
-      <i class="bi bi-house me-1"></i>Menu Principal
-    </a>
-  </div>
-</nav>
-<div class="container pb-5">
+
+
 """
 
 BASE_FOOT = """
@@ -272,9 +264,9 @@ MENU_TEMPLATE = BASE_HEAD + """
       <div class="col-md-6">
         <a href="/bisseccao" class="text-decoration-none">
           <div class="card p-4 h-100 text-center">
-            <i class="bi bi-arrows-collapse fs-1 text-success mb-2"></i>
+            <i class=""></i>
             <h5>Método da Bisseção</h5>
-            <p class="text-muted small mb-0">Zeros de funções por divisão de intervalos</p>
+            <p class="text-muted small mb-0"></p>
           </div>
         </a>
       </div>
@@ -282,9 +274,9 @@ MENU_TEMPLATE = BASE_HEAD + """
       <div class="col-md-6">
         <a href="/gauss" class="text-decoration-none">
           <div class="card p-4 h-100 text-center">
-            <i class="bi bi-grid-3x3 fs-1 text-info mb-2"></i>
+            <i class=""></i>
             <h5>Eliminação de Gauss</h5>
-            <p class="text-muted small mb-0">Método direto com ou sem pivotamento parcial</p>
+            <p class="text-muted small mb-0"></p>
           </div>
         </a>
       </div>
@@ -292,9 +284,9 @@ MENU_TEMPLATE = BASE_HEAD + """
       <div class="col-md-6">
         <a href="/lu" class="text-decoration-none">
           <div class="card p-4 h-100 text-center">
-            <i class="bi bi-layout-split fs-1 text-warning mb-2"></i>
+            <i class=""></i>
             <h5>Decomposição LU</h5>
-            <p class="text-muted small mb-0">Fatoração A = L·U e resolução por substituição</p>
+            <p class="text-muted small mb-0"></p>
           </div>
         </a>
       </div>
@@ -302,9 +294,9 @@ MENU_TEMPLATE = BASE_HEAD + """
       <div class="col-md-6">
         <a href="/jacobi" class="text-decoration-none">
           <div class="card p-4 h-100 text-center">
-            <i class="bi bi-arrow-repeat fs-1 text-primary mb-2"></i>
+            <i class=""></i>
             <h5>Método de Jacobi</h5>
-            <p class="text-muted small mb-0">Método iterativo com critério das linhas</p>
+            <p class="text-muted small mb-0"></p>
           </div>
         </a>
       </div>
@@ -312,9 +304,9 @@ MENU_TEMPLATE = BASE_HEAD + """
       <div class="col-md-6 offset-md-3">
         <a href="/seidel" class="text-decoration-none">
           <div class="card p-4 h-100 text-center">
-            <i class="bi bi-arrow-clockwise fs-1 text-danger mb-2"></i>
+            <i class=""></i>
             <h5>Gauss-Seidel</h5>
-            <p class="text-muted small mb-0">Método iterativo com critério de Sassenfeld</p>
+            <p class="text-muted small mb-0"></p>
           </div>
         </a>
       </div>
@@ -327,7 +319,7 @@ MENU_TEMPLATE = BASE_HEAD + """
 # ── Bisseção ─────────────────────────────────────────────────────
 
 BISSECCAO_TEMPLATE = BASE_HEAD + """
-<h1 class="mb-1"><i class="bi bi-arrows-collapse text-success me-2"></i>Método da Bisseção</h1>
+<h1 class="mb-1"><i class=""></i>Método da Bisseção</h1>
 <p class="text-muted mb-4">Zeros de funções por divisão de intervalos</p>
 
 {% if stage == 'menu' %}
@@ -414,7 +406,7 @@ BISSECCAO_TEMPLATE = BASE_HEAD + """
 # ── Gauss ────────────────────────────────────────────────────────
 
 GAUSS_TEMPLATE = BASE_HEAD + """
-<h1 class="mb-1"><i class="bi bi-grid-3x3 text-info me-2"></i>Eliminação de Gauss</h1>
+<h1 class="mb-1"></i>Eliminação de Gauss</h1>
 <p class="text-muted mb-4">Método direto {{ '(pivotamento parcial)' if use_P else '(simples)' }}</p>
 
 {% if stage == 'choose_n' %}
@@ -567,7 +559,7 @@ GAUSS_TEMPLATE = BASE_HEAD + """
 # ── Decomposição LU ──────────────────────────────────────────────
 
 LU_TEMPLATE = BASE_HEAD + """
-<h1 class="mb-1"><i class="bi bi-layout-split text-warning me-2"></i>Decomposição LU</h1>
+<h1 class="mb-1"></i>Decomposição LU</h1>
 <p class="text-muted mb-4">Fatoração A = L·U e resolução por substituição (sem pivotamento)</p>
 
 {% if stage == 'choose_n' %}
@@ -686,10 +678,10 @@ LU_TEMPLATE = BASE_HEAD + """
 
 ITER_TEMPLATE = BASE_HEAD + """
 {% if metodo == 'jacobi' %}
-  <h1 class="mb-1"><i class="bi bi-arrow-repeat text-primary me-2"></i>Método de Jacobi</h1>
+  <h1 class="mb-1"></i>Método de Jacobi</h1>
   <p class="text-muted mb-4">Método iterativo — critério das linhas (diagonal dominante)</p>
 {% else %}
-  <h1 class="mb-1"><i class="bi bi-arrow-clockwise text-danger me-2"></i>Gauss-Seidel</h1>
+  <h1 class="mb-1">Gauss-Seidel</h1>
   <p class="text-muted mb-4">Método iterativo — critério de Sassenfeld</p>
 {% endif %}
 
@@ -761,9 +753,9 @@ ITER_TEMPLATE = BASE_HEAD + """
     <div class="alert alert-danger">{{ erro }}</div>
   {% else %}
     {% if convergencia %}
-      <div class="alert alert-success">✅ Critério de convergência satisfeito.</div>
+      <div class="alert alert-success"> Critério de convergência satisfeito.</div>
     {% else %}
-      <div class="alert alert-warning">⚠️ Critério de convergência NÃO satisfeito — resultado pode divergir.</div>
+      <div class="alert alert-warning"> Critério de convergência NÃO satisfeito — resultado pode divergir.</div>
     {% endif %}
 
     {% if convergiu %}
