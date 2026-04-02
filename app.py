@@ -525,31 +525,6 @@ GAUSS_TEMPLATE = BASE_HEAD + """
   </div>
 
   <div class="col-lg-6">
-    <div class="card p-4 h-100">
-      <h5><i class="bi bi-check2-circle me-2"></i>Resultado</h5>
-      {% if x is none %}
-        <div class="alert alert-warning">Sistema singular ou indeterminado.</div>
-      {% else %}
-        <p class="text-muted">Solução (6 casas decimais):</p>
-        <ul class="list-group mb-3">
-          {% for i in range(n) %}
-          <li class="list-group-item d-flex justify-content-between">
-            x{{ i+1 }}
-            <span class="badge bg-info rounded-pill">{{ "%.6f"|format(x[i]) }}</span>
-          </li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-      <div class="d-flex gap-2 mt-auto">
-        <form method="post">
-          <input type="hidden" name="stage" value="enter_matrix">
-          <input type="hidden" name="n" value="{{ n }}">
-          <input type="hidden" name="use_P" value="{{ 1 if use_P else 0 }}">
-          <button class="btn btn-outline-secondary rounded-pill">Voltar</button>
-        </form>
-        <a href="/gauss" class="btn btn-outline-secondary rounded-pill">Reiniciar</a>
-        <a href="/" class="btn btn-outline-dark rounded-pill">Menu</a>
-      </div>
     </div>
   </div>
 </div>
@@ -643,32 +618,6 @@ LU_TEMPLATE = BASE_HEAD + """
       </div>
     </div>
   </div>
-  <div class="col-lg-6">
-    <div class="card p-4 h-100">
-      <h5><i class="bi bi-check2-circle me-2"></i>Resultado</h5>
-      {% if x is none %}
-        <div class="alert alert-warning">Sistema singular ou indeterminado.</div>
-      {% else %}
-        <p class="text-muted">Solução (6 casas decimais):</p>
-        <ul class="list-group mb-3">
-          {% for i in range(n) %}
-          <li class="list-group-item d-flex justify-content-between">
-            x{{ i+1 }}
-            <span class="badge bg-warning text-dark rounded-pill">{{ "%.6f"|format(x[i]) }}</span>
-          </li>
-          {% endfor %}
-        </ul>
-      {% endif %}
-      <div class="d-flex gap-2 mt-auto">
-        <form method="post">
-          <input type="hidden" name="stage" value="enter_matrix">
-          <input type="hidden" name="n" value="{{ n }}">
-          <button class="btn btn-outline-secondary rounded-pill">Voltar</button>
-        </form>
-        <a href="/lu" class="btn btn-outline-secondary rounded-pill">Reiniciar</a>
-        <a href="/" class="btn btn-outline-dark rounded-pill">Menu</a>
-      </div>
-    </div>
   </div>
 </div>
 {% endif %}
@@ -790,28 +739,7 @@ ITER_TEMPLATE = BASE_HEAD + """
           </div>
         </div>
       </div>
-      <div class="col-lg-4">
-        <div class="card p-4 h-100">
-          <h5><i class="bi bi-check2-circle me-2"></i>Resultado Final</h5>
-          <ul class="list-group mb-3">
-            {% for i in range(n) %}
-            <li class="list-group-item d-flex justify-content-between">
-              x{{ i+1 }}
-              <span class="badge bg-primary rounded-pill">{{ "%.6f"|format(x[i]) }}</span>
-            </li>
-            {% endfor %}
-          </ul>
-          <div class="d-flex flex-column gap-2 mt-auto">
-            <form method="post">
-              <input type="hidden" name="stage" value="enter_matrix">
-              <input type="hidden" name="n" value="{{ n }}">
-              <button class="btn btn-outline-secondary rounded-pill w-100">Voltar</button>
-            </form>
-            <a href="/{{ metodo }}" class="btn btn-outline-secondary rounded-pill">Reiniciar</a>
-            <a href="/" class="btn btn-outline-dark rounded-pill">Menu</a>
-          </div>
-        </div>
-      </div>
+      
     </div>
   {% endif %}
 {% endif %}
